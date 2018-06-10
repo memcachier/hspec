@@ -15,18 +15,24 @@ data Config = Config {
   configNested :: Bool
 , configFormatter :: Maybe String
 , configNoMain :: Bool
+, configInDir :: Maybe String
 , configModuleName :: Maybe String
+, configWithType :: Maybe String
+, configExtraModules :: Maybe String
 } deriving (Eq, Show)
 
 defaultConfig :: Config
-defaultConfig = Config False Nothing False Nothing
+defaultConfig = Config False Nothing False Nothing Nothing Nothing Nothing
 
 options :: [OptDescr (Config -> Config)]
 options = [
     Option [] ["nested"] (NoArg $ \c -> c {configNested = True}) ""
   , Option [] ["formatter"] (ReqArg (\s c -> c {configFormatter = Just s}) "FORMATTER") ""
   , Option [] ["module-name"] (ReqArg (\s c -> c {configModuleName = Just s}) "NAME") ""
+  , Option [] ["in-dir"] (ReqArg (\s c -> c {configInDir = Just s}) "DIRECTORY") ""
   , Option [] ["no-main"] (NoArg $ \c   -> c {configNoMain = True}) ""
+  , Option [] ["with-type"] (ReqArg (\s c -> c {configWithType = Just s}) "WITH-TYPE") ""
+  , Option [] ["extra-modules"] (ReqArg (\s c -> c {configExtraModules = Just s}) "EXTRA-MODULES") ""
   ]
 
 usage :: String -> String

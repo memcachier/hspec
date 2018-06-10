@@ -61,12 +61,13 @@ mkSpecModule src conf nodes =
   ( "{-# LINE 1 " . shows src . " #-}\n"
   . showString "{-# OPTIONS_GHC -fno-warn-warnings-deprecations #-}\n"
   . showString ("module " ++ moduleName src conf ++" where\n")
-  . importList nodes
+  . importList (configInDir conf) nodes
   . showString "import Test.Hspec.Discover\n"
+  . extraModules
   . maybe driver driverWithFormatter (configFormatter conf)
-  . showString "spec :: Spec\n"
+  . showString ("spec :: " ++ specType ++ "\n")
   . showString "spec = "
-  . formatSpecs nodes
+  . formatSpecs (configInDir conf) nodes
   ) "\n"
   where
     driver =
@@ -75,6 +76,14 @@ mkSpecModule src conf nodes =
               showString "main :: IO ()\n"
             . showString "main = hspec spec\n"
           True -> ""
+    specType =
+        case configWithType conf of
+          Nothing -> "Spec"
+          Just withType -> "SpecWith " ++ withType
+    extraModules =
+        case configExtraModules conf of
+          Nothing -> id
+          Just ems -> foldr (.) id $ map (\m -> showString ("import " ++ m ++ "\n")) (words ems)
 
 moduleName :: FilePath -> Config -> String
 moduleName src conf = fromMaybe (if configNoMain conf then pathToModule src else "Main") (configModuleName conf)
@@ -97,25 +106,36 @@ moduleNameFromId :: String -> String
 moduleNameFromId = reverse . dropWhile (== '.') . dropWhile (/= '.') . reverse
 
 -- | Generate imports for a list of specs.
-importList :: [Spec] -> ShowS
-importList = foldr (.) "" . map f
+importList :: Maybe String -> [Spec] -> ShowS
+importList mindir = foldr (.) "" . map f
   where
     f :: Spec -> ShowS
-    f spec = "import qualified " . showString (specModule spec) . "Spec\n"
+    f spec = "import qualified " . showString (lead ++ specModule spec) . "Spec\n"
+    lead = case mindir of
+      Nothing -> ""
+      Just d -> intercalate "." (splitDirectories d) ++ "."
 
 -- | Combine a list of strings with (>>).
 sequenceS :: [ShowS] -> ShowS
 sequenceS = foldr (.) "" . intersperse " >> "
 
 -- | Convert a list of specs to code.
-formatSpecs :: [Spec] -> ShowS
-formatSpecs xs
+formatSpecs :: Maybe String -> [Spec] -> ShowS
+formatSpecs mindir xs
   | null xs   = "return ()"
-  | otherwise = sequenceS (map formatSpec xs)
+  | otherwise = sequenceS (map (formatSpec mindir) xs)
 
 -- | Convert a spec to code.
-formatSpec :: Spec -> ShowS
-formatSpec (Spec file name) = "postProcessSpec " . shows file . " (describe " . shows name . " " . showString name . "Spec.spec)"
+formatSpec :: Maybe String -> Spec -> ShowS
+formatSpec mindir (Spec file name) =
+    "postProcessSpec " . shows dfile
+  . " (describe " . shows dname . " " . showString dname . "Spec.spec)"
+  where dname = case mindir of
+          Nothing -> name
+          Just d -> intercalate "." (splitDirectories d) ++ "." ++ name
+        dfile = case mindir of
+          Nothing -> file
+          Just d -> d </> name
 
 findSpecs :: FilePath -> IO [Spec]
 findSpecs src = do

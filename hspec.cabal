@@ -1,8 +1,8 @@
--- This file has been generated from package.yaml by hpack version 0.25.0.
+-- This file has been generated from package.yaml by hpack version 0.28.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4e6d8536db1ab37d1c42006f33479988a740fc613f7d80c8ac3d2bbc005d2108
+-- hash: 7d4a1b3bc62fb68f128aec55cc8c2847c4c50e5572297c238890fd9bfb8502ba
 
 name:             hspec
 version:          2.4.8
@@ -32,7 +32,6 @@ description:      Hspec is a testing framework for Haskell. It is inspired by
                   * automatic discovery of test files
                   .
                   The Hspec Manual is at <http://hspec.github.io/>.
-
 extra-source-files:
     CHANGES.markdown
 

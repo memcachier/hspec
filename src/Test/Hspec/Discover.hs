@@ -3,6 +3,7 @@ module Test.Hspec.Discover {-# WARNING
   "This module is used by @hspec-discover@.  It is not part of the public API and may change at any time."
   #-} (
   Spec
+, SpecWith
 , hspec
 , IsFormatter (..)
 , hspecWithFormatter
@@ -37,10 +38,10 @@ hspecWithFormatter formatter spec = do
   f <- toFormatter formatter
   hspecWith defaultConfig {configFormatter = Just f} spec
 
-postProcessSpec :: FilePath -> Spec -> Spec
+postProcessSpec :: FilePath -> SpecWith a -> SpecWith a
 postProcessSpec = locationHeuristicFromFile
 
-locationHeuristicFromFile :: FilePath -> Spec -> Spec
+locationHeuristicFromFile :: FilePath -> SpecWith a -> SpecWith a
 locationHeuristicFromFile file spec = do
   mInput <- either (const Nothing) Just <$> (runIO . safeTry . readFile) file
   let lookupLoc = maybe (\_ _ _ -> Nothing) (lookupLocation file)  mInput
